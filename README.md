@@ -2,15 +2,15 @@
 Keep your bookmarks encrypted in cloud
 
 # about
-Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party. This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
+Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party.
+
+This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
 
 ![screenshot](https://raw.githubusercontent.com/steve-vincent/web-bookmarks/master/screenshot.png)
 
 # get started
 
-This solution requires:
-- A host to server these files
-- Creating a (free) firebase app to store encrypted data (*<- could be rewritten for another backend*)
+This solution requires creating a (free) firebase app to store encrypted data (*<- else, write your own backend*)
 
 Instructions:
 1. Create new (free) firebase project
@@ -43,7 +43,7 @@ On an android phone, [Url Forwarder](https://play.google.com/store/apps/details?
 
 
 
-## folders
+## folders and format
 Example JSON: Use "nodes" for folders
 ```
 [
