@@ -1,5 +1,5 @@
 # web-bookmarks
-Keep your bookmarks encrypted in cloud
+Simple cross-device encrypted bookmarks 
 
 # about
 Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party.
