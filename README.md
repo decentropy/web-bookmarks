@@ -4,11 +4,13 @@ Keep your bookmarks encrypted in cloud
 # about
 Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform, and 2) exposes all your personal bookmarks. This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
 
+![screenshot](https://raw.githubusercontent.com/steve-vincent/web-bookmarks/master/screenshot.png)
+
 # get started
 
 This solution requires:
 - A host to server these files
-- Creating a (free) firebase app to store encrypted data (<- easily rewritten for another backend storage)
+- Creating a (free) firebase app to store encrypted data (<- could be rewritten for another backend)
 
 Instructions:
 1. Create new firebase project
@@ -16,7 +18,7 @@ Instructions:
 3. Create Realtime Database (in test mode)
 
 That's all.
-refresh page, add bookmark, you'll be prompted for encryption passphrase
+refresh bookmarks.html, add bookmark, you'll be prompted for encryption passphrase
 
 Optional (Firebase DB permissions)
 1. Enable Firebase sign-in method Phone, and authorize your domain.
@@ -25,8 +27,24 @@ Optional (Firebase DB permissions)
 
 # details
 
-## JSON Format
-Example: Use "nodes" for bookmark folders
+## help
+- click "edit" to manually edit JSON. You must click "save" to commit remote storage.
+- use "manage" link, if JSON GUI is easier for you.
+- click the "..." to delete a bookmark
+
+## adding bookmarks
+To bookmark a page, use link or you open "bookmarks.html#<url to add>"
+
+To add from browser in your PC, use a bookmarklet, e.g.:
+
+```javascript:window.location="<my host>/bookmarks.html#"+window.location;```
+
+On an android phone, [Url Forwarder](https://play.google.com/store/apps/details?id=net.daverix.urlforward) app works to share current page. (sorry, I don't know about ios)
+
+
+
+## folders
+Example JSON: Use "nodes" for folders
 ```[
 	{
 		"href": "http://link1",
@@ -55,4 +73,5 @@ Example: Use "nodes" for bookmark folders
 		"text": "link 2"
 	}
 ]```
+
 
