@@ -44,7 +44,8 @@ On an android phone, [Url Forwarder](https://play.google.com/store/apps/details?
 
 
 ## folders and format
-Example JSON: Use "nodes" for folders
+Example JSON: Use "nodes" for folders. 
+See [bootstrap-treeview](https://github.com/jonmiles/bootstrap-treeview) for more menu formatting options.
 ```
 [
 	{
