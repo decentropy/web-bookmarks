@@ -28,9 +28,9 @@ Optional (Firebase DB permissions) - *auth by phone, if you're worried some java
 # details
 
 ## help
+- click "..." to delete or move an item
 - click "edit" to manually edit JSON. You must click "save" to commit remote storage.
-- use "manage" link, if JSON GUI is easier for you.
-- click the "..." to delete a bookmark
+- use "manage" link, for convenient GUI JSON editor
 
 ## adding bookmarks
 To bookmark a page, use link or you open "bookmarks.html#*url_to_add.com*"
