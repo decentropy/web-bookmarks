@@ -12,6 +12,11 @@
 //========================================
 
 
+
+function tdebug(str){
+  $('#tdebug').val(str + '\n' + $('#tdebug').val());
+}
+
 //LocalStorage keys
 var local_pwd = "pwd";
 var local_data = "jsonstr";
@@ -23,10 +28,12 @@ var dbref = firebase.database().ref().child(remote_data);
 //get data
 function getData(func){ //get remote, decrypt, save local, (optional: function)
   dbref.once("value").then( snapshot => saveLocalThen(decrypt(snapshot.val()), func) ); 
+  tdebug('loading and decrypting (remote)'); 
 }
 //save data
 function saveData(func){ //get local, encrypt, save remote, (optional: function)
   dbref.set(encrypt(getLocal()), func);
+  tdebug('encrypting and saving (remote)'); 
 }
 
 
@@ -70,6 +77,7 @@ function getpwd(){
 
 //add item
 function addItem(url){
+  tdebug('adding ' + url); 
   if (url){
     var newdata = JSON.parse(getLocal());
     if (!newdata) newdata = [];
@@ -80,8 +88,10 @@ function addItem(url){
 
 //delete or move item
 function cutItem(name, moveto){
+  tdebug('cutting ' + name); 
   var cutobj = traverse(JSON.parse(getLocal()), name, null);
   if (moveto){ //move
+    tdebug('pasting to ' + moveto); 
     var pasteobj =  traverse(cutobj.obj, moveto, cutobj.node);
     if (!pasteobj.node){ //no target matched
       pasteobj.obj.push({"nodes": [cutobj.node], "text": moveto}); //new folder
@@ -117,5 +127,3 @@ function traverse(o, name, paste){ //node to move
   });
   return {"obj":o, "node":node};
 }
-
-
