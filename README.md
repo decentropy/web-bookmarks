@@ -45,7 +45,8 @@ On an android phone, [Url Forwarder](https://play.google.com/store/apps/details?
 
 ## folders
 Example JSON: Use "nodes" for folders
-```[
+```
+[
 	{
 		"href": "http://link1",
 		"text": "link 1"
@@ -72,6 +73,7 @@ Example JSON: Use "nodes" for folders
 		"href": "http://link2",
 		"text": "link 2"
 	}
-]```
+]
+```
 
 
