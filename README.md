@@ -39,7 +39,7 @@ To add from browser in your PC, use a bookmarklet, e.g.:
 
 ```javascript:window.location="<my host>/bookmarks.html#"+window.location;```
 
-On an android phone, [Url Forwarder](https://play.google.com/store/apps/details?id=net.daverix.urlforward) app works to share current page. (sorry, I don't know about ios)
+On an android phone, share current page as bookmark with [Url Forwarder](https://play.google.com/store/apps/details?id=net.daverix.urlforward) (sorry, I don't know about ios)
 
 
 
