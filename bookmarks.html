@@ -38,11 +38,13 @@ function toggleTextArea() {
   if ($('#editorDiv').css("display")=='block'){
     $('#savelink').css({'color': 'yellow'});
     $('#editorDiv').css({'display': 'none'});
-    updateTree($('#editor').val());
+    var data = JSON.stringify(JSON.parse($('#editor').val())); //flatten
+    updateTree(data);
   }
   else{
     $('#editorDiv').css({'display': 'block'});
-    $('#editor').val(JSON.stringify(JSON.parse(getLocal()), null, "\t")); //edit prettified
+    var prettify = getLocal().replace(/},/g,"},\n").replace(/],/g,"\n],").replace(/\[/g,"[\n"); //prettify
+    $('#editor').val(prettify); //edit
   }
 }
 
@@ -53,8 +55,8 @@ function toggleTextArea() {
 ============================ TREE DISPLAY ====================================
 -->
 <div id="tree"></div>
-<a href="#" onclick="addItem(prompt('URL to add:',''));saveData();setTimeout(refreshTree,500);">add+</a> - 
-<a href="http://jsoneditoronline.org/?json={%22instruction%22:%20%22paste%20json%20here,%20edit%20to%20right%22}" target="_blank">manage</a> - 
+<a href="#" onclick="addItem(prompt('URL to add:'));saveData(refreshTree);">add+</a> - 
+<a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
 <a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
 <script>//https://github.com/jonmiles/bootstrap-treeview
 function updateTree(json) {
@@ -70,9 +72,9 @@ function updateTree(json) {
     borderColor: '#333333',
     expandIcon: 'glyphicon glyphicon-chevron-right',
     collapseIcon: 'glyphicon glyphicon-chevron-down',
-        showCheckbox: true,
-        checkedIcon: "glyphicon glyphicon-option-horizontal",
-        uncheckedIcon: "glyphicon glyphicon-option-horizontal"
+    showCheckbox: true,
+    checkedIcon: "glyphicon glyphicon-option-horizontal",
+    uncheckedIcon: "glyphicon glyphicon-option-horizontal"
   });
   $('#tree').treeview('collapseAll', { silent: true });
   $('#tree').on('nodeSelected', function(event, data) {
@@ -81,7 +83,8 @@ function updateTree(json) {
     }
   });
   $('#tree').on('nodeChecked', function(event, data) { //FIX add move option
-    if (confirm("DELETE?\n\n" + data.text)) {delItem(data.text); saveData(); resetPage();};
+    var moveto = prompt(data.text + "\n\nDELETE?\n\n('Ok' to delete. Type folder name, to move)");
+    if (moveto!=null) {cutItem(data.text, moveto); saveData(refreshTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
 
@@ -89,13 +92,12 @@ function updateTree(json) {
 
 //IF ADD e.g. bookmarks.html#<new url>
 function resetPage(){
-  setTimeout("window.location.href = 'bookmarks.html'", 500); //FIX: saveData func not working mobile?
+  setTimeout("window.location.href = 'bookmarks.html'", 1000); //fix for hash reset
 }
 if (window.location.hash){
   var url = window.location.hash.substr(1);
-  addItem(url,'');
-  saveData();
-  resetPage();
+  addItem(url);
+  saveData(resetPage);
 }
 
 //LOAD MENU
