@@ -50,12 +50,12 @@ function toggleTextArea() {
 
 </script>
 
-
+  
 <!-- 
 ============================ TREE DISPLAY ====================================
 -->
 <div id="tree"></div>
-<a href="#" onclick="addItem(prompt('URL to add:'));saveData(refreshTree);">add+</a> - 
+&nbsp;&nbsp;<a href="#" onclick="addItem(prompt('URL to add:')); saveData(refreshTree);">add+</a> - 
 <a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
 <a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
 <script>//https://github.com/jonmiles/bootstrap-treeview
@@ -64,6 +64,7 @@ function updateTree(json) {
     return;
   }
   saveLocal(json);
+  tdebug('refreshing menu'); 
   $('#tree').treeview({
     data: JSON.parse(json),
     enableLinks: true,
@@ -104,11 +105,16 @@ if (window.location.hash){
 function refreshTree(){
   updateTree(getLocal());
 }
-refreshTree(); //local
-getData(refreshTree); //remote
+$( document ).ready(function() {
+  refreshTree(); //local
+  getData(refreshTree); //remote
+});
 
 </script>
 
+<br><br><textarea id="tdebug" style="display:none; width:100%; height:150px; background-color:#333333; color:#ffff00; font-size:10px;">============
+debug output</textarea>
+<a href="#" onclick="$('#tdebug').css({'display': 'block'});">#</a>
 
 </body>
 </html>
