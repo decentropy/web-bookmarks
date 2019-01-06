@@ -13,7 +13,7 @@ This solution requires:
 - Creating a (free) firebase app to store encrypted data (<- could be rewritten for another backend)
 
 Instructions:
-1. Create new firebase project
+1. Create new (free) firebase project
 2. Click "Web Setup" and copy "Initialize Firebase" script into common.js
 3. Create Realtime Database (in test mode)
 
