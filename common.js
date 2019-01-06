@@ -12,10 +12,10 @@
 //========================================
 
 
-//Storage keys
-var local_pwd = "AESpassword";
-var local_data = "decrypted";
-var remote_data = "encrypted";
+//LocalStorage keys
+var local_pwd = "pwd";
+var local_data = "jsonstr";
+var remote_data = "encdata";
 
 
 //firebase get,set
@@ -69,33 +69,53 @@ function getpwd(){
 
 
 //add item
-function addItem(url, name){
+function addItem(url){
   if (url){
     var newdata = JSON.parse(getLocal());
     if (!newdata) newdata = [];
-    if (!name) name = url;
-    newdata.push({'href':url, 'text':name});
+    newdata.push({'href':url, 'text':url});
     saveLocal(JSON.stringify(newdata));
   }
 }
 
-//delete item
-function delItem(name){
-  var newdata = traverse(JSON.parse(getLocal()),name);
-  saveLocal(JSON.stringify(newdata));
+//delete or move item
+function cutItem(name, moveto){
+  var cutobj = traverse(JSON.parse(getLocal()), name, null);
+  if (moveto){ //move
+    var pasteobj =  traverse(cutobj.obj, moveto, cutobj.node);
+    if (!pasteobj.node){ //no target matched
+      pasteobj.obj.push({"nodes": [cutobj.node], "text": moveto}); //new folder
+    }
+    cutobj = pasteobj; //sync
+  }
+  saveLocal(JSON.stringify(cutobj.obj));
 }
 
 //Traverse json
-function traverse(o,name){
-  jQuery(o).each(function (index){
+function traverse(o, name, paste){ //node to move
+  var node;
+  jQuery(o).each(function (index){ //loop
     if (o[index].nodes) {
-      o[index].nodes = traverse(o[index].nodes,name);
+      obj = traverse(o[index].nodes, name, paste); //deeper
+      o[index].nodes = obj.obj;
+      if (obj.node) node = obj.node;
     }
-    if(o[index].text == name){
-      o.splice(index,1);
-      return false;
+    if (paste){ //move
+      if(o[index].text == name){ 
+        node = o[index];
+        o[index].nodes.push(paste); //paste
+        return false;
+      }
+    }
+    else{ 
+      if(o[index].text == name){ 
+        node = o[index]; //cut
+        o.splice(index,1);
+        return false;
+      }
     }
   });
-  return o;
+  return {"obj":o, "node":node};
 }
+
 
