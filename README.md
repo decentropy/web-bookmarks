@@ -2,7 +2,7 @@
 Keep your bookmarks encrypted in cloud
 
 # about
-Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform, and 2) exposes all your personal bookmarks. This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
+Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party. This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
 
 ![screenshot](https://raw.githubusercontent.com/steve-vincent/web-bookmarks/master/screenshot.png)
 
