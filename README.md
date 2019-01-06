@@ -60,10 +60,6 @@ Example JSON: Use "nodes" for folders
 					{
 						"href": "http://link2a",
 						"text": "link 2a"
-					},
-					{
-						"href": "http://link2b",
-						"text": "link 2b"
 					}
 				]
 			},
