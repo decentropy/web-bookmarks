@@ -1,4 +1,4 @@
-// INSERT "Initialize Firebase" SNIPPET ('var config" ... "firebase.initializeApp(config);"
+// INSERT YOUR "Initialize Firebase" CODE
 //========================================
   var config = {
     apiKey: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
