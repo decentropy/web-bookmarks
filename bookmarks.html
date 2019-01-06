@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset=utf-8 />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmarks</title>
+
+<!-- Stylesheets -->
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" rel="stylesheet">
+<style>
+body {background: black; color: white;}
+</style>
+
+<!-- Common Javascript -->
+<script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="bootstrap-treeview.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+<script src="common.js?z"></script>
+
+</head>
+<body>
+
+
+<!-- 
+============================ EDITOR ====================================
+-->
+Bookmarks: 
+<a href="javascript:toggleTextArea()">edit</a> - 
+<div id="editorDiv" style="display:none;">
+  <textarea id="editor" style="width:100%; height:600px; color:black;"></textarea>
+</div>
+<a id="savelink" href="#" onclick="saveData();localStorage.setItem('backupdata', getLocal());$('#savelink').removeAttr('style');">save</a>
+
+<script>
+function toggleTextArea() {
+  if ($('#editorDiv').css("display")=='block'){
+    $('#savelink').css({'color': 'yellow'});
+    $('#editorDiv').css({'display': 'none'});
+    updateTree($('#editor').val());
+  }
+  else{
+    $('#editorDiv').css({'display': 'block'});
+    $('#editor').val(JSON.stringify(JSON.parse(getLocal()), null, "\t")); //edit prettified
+  }
+}
+
+</script>
+
+
+<!-- 
+============================ TREE DISPLAY ====================================
+-->
+<div id="tree"></div>
+<a href="#" onclick="addItem(prompt('URL to add:',''));saveData();setTimeout(refreshTree,500);">add+</a> - 
+<a href="http://jsoneditoronline.org/?json={%22instruction%22:%20%22paste%20json%20here,%20edit%20to%20right%22}" target="_blank">manage</a> - 
+<a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
+<script>//https://github.com/jonmiles/bootstrap-treeview
+function updateTree(json) {
+  if (!json) {
+    return;
+  }
+  saveLocal(json);
+  $('#tree').treeview({
+    data: JSON.parse(json),
+    enableLinks: true,
+    backColor: '#000000',
+    onhoverColor: '#333366',
+    borderColor: '#333333',
+    expandIcon: 'glyphicon glyphicon-chevron-right',
+    collapseIcon: 'glyphicon glyphicon-chevron-down',
+        showCheckbox: true,
+        checkedIcon: "glyphicon glyphicon-option-horizontal",
+        uncheckedIcon: "glyphicon glyphicon-option-horizontal"
+  });
+  $('#tree').treeview('collapseAll', { silent: true });
+  $('#tree').on('nodeSelected', function(event, data) {
+    if (!data.href){
+      $('#tree').treeview('toggleNodeExpanded', data.nodeId);
+    }
+  });
+  $('#tree').on('nodeChecked', function(event, data) { //FIX add move option
+    if (confirm("DELETE?\n\n" + data.text)) {delItem(data.text); saveData(); resetPage();};
+    $('#tree').treeview('uncheckAll', { silent: true });
+  });
+
+}
+
+//IF ADD e.g. bookmarks.html#<new url>
+function resetPage(){
+  setTimeout("window.location.href = 'bookmarks.html'", 500); //FIX: saveData func not working mobile?
+}
+if (window.location.hash){
+  var url = window.location.hash.substr(1);
+  addItem(url,'');
+  saveData();
+  resetPage();
+}
+
+//LOAD MENU
+function refreshTree(){
+  updateTree(getLocal());
+}
+refreshTree(); //local
+getData(refreshTree); //remote
+
+</script>
+
+
+</body>
+</html>
