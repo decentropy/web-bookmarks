@@ -1,5 +1,5 @@
 # web-bookmarks
-Web bookmarks with clien-side encryption
+Web bookmarks manager with client-side encryption
 
 # about
 Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party.
