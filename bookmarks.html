@@ -59,6 +59,7 @@ function toggleTextArea() {
 <a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
 <a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
 <script>//https://github.com/jonmiles/bootstrap-treeview
+var expanded = new Set();
 function updateTree(json) {
   if (!json) {
     return;
@@ -77,18 +78,28 @@ function updateTree(json) {
     checkedIcon: "glyphicon glyphicon-option-horizontal",
     uncheckedIcon: "glyphicon glyphicon-option-horizontal"
   });
-  $('#tree').treeview('collapseAll', { silent: true });
-  $('#tree').on('nodeSelected', function(event, data) {
-    if (!data.href){
-      $('#tree').treeview('toggleNodeExpanded', data.nodeId);
-    }
-  });
-  $('#tree').on('nodeChecked', function(event, data) { //FIX add move option
+  $('#tree').on('nodeChecked', function(event, data) { //delete, move
     var moveto = prompt(data.text + "\n\nDELETE?\n\n('Ok' to delete. Type folder name, to move)");
     if (moveto!=null) {cutItem(data.text, moveto); saveData(refreshTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
-
+  $('#tree').on('nodeSelected', function(event, data) {//select->toggle
+    if (!data.href){
+      $('#tree').treeview('toggleNodeExpanded', data.nodeId);
+    }
+  });
+  //remember expanded
+  $('#tree').on('nodeExpanded', function(event, data) {
+    expanded.add(data.nodeId);
+  });
+  $('#tree').on('nodeCollapsed', function(event, data) {
+    expanded.delete(data.nodeId);
+  });
+  $('#tree').treeview('collapseAll', { silent: true });  
+  var expandedArr = Array.from(expanded);
+  for (var nid in expandedArr){ 
+    $('#tree').treeview('expandNode', expandedArr[nid]);
+  }
 }
 
 //IF ADD e.g. bookmarks.html#<new url>
