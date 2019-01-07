@@ -59,12 +59,23 @@ function toggleTextArea() {
 <a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
 <a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
 <script>//https://github.com/jonmiles/bootstrap-treeview
+
+//load expanded
 var expanded = new Set();
+if (localStorage.getItem("expanded")){ 
+  expanded = new Set(JSON.parse(localStorage.getItem("expanded")));
+}
+//save expanded
+function saveExpanded(){ 
+  localStorage.setItem("expanded", JSON.stringify(Array.from(expanded)));
+}
+
+//display menu tree
 function updateTree(json) {
   if (!json) {
     return;
   }
-  saveLocal(json);
+  saveLocal(json); //save local
   tdebug('refreshing menu'); 
   $('#tree').treeview({
     data: JSON.parse(json),
@@ -78,27 +89,37 @@ function updateTree(json) {
     checkedIcon: "glyphicon glyphicon-option-horizontal",
     uncheckedIcon: "glyphicon glyphicon-option-horizontal"
   });
+  //item menu
   $('#tree').on('nodeChecked', function(event, data) { //delete, move
     var moveto = prompt(data.text + "\n\nDELETE?\n\n('Ok' to delete. Type folder name, to move)");
     if (moveto!=null) {cutItem(data.text, moveto); saveData(refreshTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
+  //remember expand/collapse
   $('#tree').on('nodeSelected', function(event, data) {//select->toggle
     if (!data.href){
       $('#tree').treeview('toggleNodeExpanded', data.nodeId);
     }
   });
-  //remember expanded
   $('#tree').on('nodeExpanded', function(event, data) {
     expanded.add(data.nodeId);
+    saveExpanded();
   });
   $('#tree').on('nodeCollapsed', function(event, data) {
     expanded.delete(data.nodeId);
+    saveExpanded();
   });
+  //re-expand
   $('#tree').treeview('collapseAll', { silent: true });  
   var expandedArr = Array.from(expanded);
   for (var nid in expandedArr){ 
-    $('#tree').treeview('expandNode', expandedArr[nid]);
+    try{
+      $('#tree').treeview('expandNode', expandedArr[nid]);
+    }
+    catch{ //forget not found
+      expanded.delete(expandedArr[nid]);
+      saveExpanded();
+    }
   }
 }
 
