@@ -100,6 +100,7 @@ function updateTree(json) {
     if (!data.href){
       $('#tree').treeview('toggleNodeExpanded', data.nodeId);
     }
+    $('#tree').treeview('toggleNodeSelected', data.nodeId);
   });
   $('#tree').on('nodeExpanded', function(event, data) {
     expanded.add(data.nodeId);
