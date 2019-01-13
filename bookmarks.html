@@ -6,79 +6,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bookmarks</title>
 
+<meta name="referrer" content="no-referrer">
+
 <!-- Stylesheets -->
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" rel="stylesheet">
 <style>
 body {background: black; color: white;}
 </style>
 
-<!-- Common Javascript -->
+<!-- Scripts -->
 <script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script src="bootstrap-treeview.js"></script>
+<script src="bootstrap-treeview.js?z"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
 <script src="common.js"></script>
+<script type="text/javascript" src="jsonQ.min.js"></script>
 
 </head>
 <body>
 
-
 <!-- 
-============================ EDITOR ====================================
+............. EDITOR .............
 -->
-Bookmarks: 
+<span id="localname"></span>: 
 <a href="javascript:toggleTextArea()">edit</a> - 
 <div id="editorDiv" style="display:none;">
   <textarea id="editor" style="width:100%; height:600px; color:black;"></textarea>
 </div>
-<a id="savelink" href="#" onclick="saveData();localStorage.setItem('backupdata', getLocal());$('#savelink').removeAttr('style');">save</a>
+<a id="savelink" href="#" onclick="G.postData(); G.backupLocal(); $('#savelink').removeAttr('style');">save</a>
 
 <script>
 function toggleTextArea() {
   if ($('#editorDiv').css("display")=='block'){
+    debug('----- close editor -----');
     $('#savelink').css({'color': 'yellow'});
     $('#editorDiv').css({'display': 'none'});
-    var data = JSON.stringify(JSON.parse($('#editor').val())); //flatten
-    updateTree(data);
+    G.saveStr( $('#editor').val() );
+    updateTree();
   }
   else{
+    debug('----- open editor -----');
     $('#editorDiv').css({'display': 'block'});
-    var prettify = getLocal().replace(/},/g,"},\n").replace(/],/g,"\n],").replace(/\[/g,"[\n"); //prettify
+    var prettify = G.tjson.replace(/},/g,"},\n").replace(/],/g,"\n],").replace(/\[/g,"[\n"); //prettify
     $('#editor').val(prettify); //edit
   }
 }
 
 </script>
 
-  
 <!-- 
-============================ TREE DISPLAY ====================================
+............. TREE DISPLAY .............
 -->
 <div id="tree"></div>
-&nbsp;&nbsp;<a href="#" onclick="addItem(prompt('URL to add:')); saveData(refreshTree);">add+</a> - 
+&nbsp;&nbsp;<a href="#" onclick="addItem(prompt('URL to add:')); G.postData(updateTree);">add+</a> - 
 <a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
 <a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
-<script>//https://github.com/jonmiles/bootstrap-treeview
 
-//load expanded
-var expanded = new Set();
-if (localStorage.getItem("expanded")){ 
-  expanded = new Set(JSON.parse(localStorage.getItem("expanded")));
-}
-//save expanded
-function saveExpanded(){ 
-  localStorage.setItem("expanded", JSON.stringify(Array.from(expanded)));
-}
+<script>// https://github.com/jonmiles/bootstrap-treeview
 
-//display menu tree
-function updateTree(json) {
-  if (!json) {
+
+// GLOBALS
+var rootids; //#tree root ids
+var G; //load on ready
+
+
+//================= UPDATE TREE
+function updateTree() {
+    debug('----- updateTree -----');
+
+  if (!G.tjson) {
     return;
   }
-  saveLocal(json); //save local
-  tdebug('refreshing menu'); 
+
+  rootids = []; //root folders
+  jQuery(G.tdata).each(function (i){ 
+    rootids.push(G.tdata[i].text); 
+  });
+
   $('#tree').treeview({
-    data: JSON.parse(json),
+    data: G.tdata,
     enableLinks: true,
     backColor: '#000000',
     onhoverColor: '#333366',
@@ -89,68 +95,83 @@ function updateTree(json) {
     checkedIcon: "glyphicon glyphicon-option-horizontal",
     uncheckedIcon: "glyphicon glyphicon-option-horizontal"
   });
-  //item menu
+
+  //ON NODE MENU -------------------
   $('#tree').on('nodeChecked', function(event, data) { //delete, move
     var moveto = prompt(data.text + "\n\nDELETE?\n\n('Ok' to delete. Type folder name, to move)");
-    if (moveto!=null) {cutItem(data.text, moveto); saveData(refreshTree);};
+    if (moveto!=null) {cutItem(data.text, moveto); G.postData(updateTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
-  //remember expand/collapse
+
+  //ON NODE SELECT -------------------
   $('#tree').on('nodeSelected', function(event, data) {//select->toggle
     if (!data.href){
       $('#tree').treeview('toggleNodeExpanded', data.nodeId);
     }
-    $('#tree').treeview('toggleNodeSelected', data.nodeId);
+    $('#tree').treeview('toggleNodeSelected', data.nodeId); //de-select
   });
+
+  //ON NODE EXPAND -------------------
   $('#tree').on('nodeExpanded', function(event, data) {
-    expanded.add(data.nodeId);
-    saveExpanded();
+    if (rootids.includes(data.text)) { //if is root
+      var opened = $('#tree').treeview('getExpanded');
+      jQuery(opened).each(function (i){ //close others
+        if (opened[i].text != data.text){
+          $('#tree').treeview('collapseNode', opened[i]);
+        }
+      });
+    }
+    G.expanded.add(data.nodeId);
+    G.saveExpanded();
   });
+
+  //ON NODE COLLAPSE -------------------
   $('#tree').on('nodeCollapsed', function(event, data) {
-    expanded.delete(data.nodeId);
-    saveExpanded();
+    G.expanded.delete(data.nodeId);
+    G.saveExpanded();
   });
-  //re-expand
+
+  //RE-EXPAND -------------------
   $('#tree').treeview('collapseAll', { silent: true });  
-  var expandedArr = Array.from(expanded);
+  var expandedArr = Array.from(G.expanded);
   for (var nid in expandedArr){ 
     try{
       $('#tree').treeview('expandNode', expandedArr[nid]);
     }
     catch{ //forget not found
-      expanded.delete(expandedArr[nid]);
-      saveExpanded();
+      G.expanded.delete(expandedArr[nid]);
+      G.saveExpanded();
     }
   }
+
 }
 
-//IF ADD e.g. bookmarks.html#<new url>
-function resetPage(){
-  setTimeout("window.location.href = 'bookmarks.html'", 1000); //fix for hash reset
-}
-if (window.location.hash){
-  var url = window.location.hash.substr(1);
-  addItem(url);
-  saveData(resetPage);
-}
+//================= LOAD PAGE, MENU 
+$(document).ready(function() {
+  debug('----- ready -----');
 
-//LOAD MENU
-function refreshTree(){
-  updateTree(getLocal());
-}
-$( document ).ready(function() {
-  refreshTree(); //local
-  getData(refreshTree); //remote
+  //G config init
+  //optional url config: _.html?local=<localkey>&remote=<remotekey>&remember=<true/false>
+  var qs = new URLSearchParams(window.location.search);
+  G = new Config(qs.get('local'),qs.get('remote'),qs.get('remember')); //local key, remote key, remember pwd?
+  $("#localname").html(G.LOCAL);
+  debug(G.REMOTE + ',' + G.REMEMBER);
+
+  //show menu tree
+  updateTree();
+  G.fetchData(updateTree); //remote
+
+  //add from bookmarklet:  _.html#<new url>
+  if (window.location.hash){
+    var url = window.location.hash.substr(1);
+    addItem(url);
+    G.postData(function(){window.location.href = window.location.href.split("#")[0]});
+  }
+
 });
 
 </script>
 
-<!-- 
-============================ DEBUG OUTPUT ====================================
--->
-<br><br><textarea id="tdebug" style="display:none; width:100%; height:150px; background-color:#333333; color:#ffff00; font-size:10px;">============
-debug output</textarea>
-<a href="#" onclick="$('#tdebug').css({'display': 'block'});">#</a>
 
 </body>
 </html>
