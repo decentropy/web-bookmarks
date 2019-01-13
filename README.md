@@ -42,8 +42,8 @@ To add from browser in your PC, use a bookmarklet, e.g.:
 On an android phone, share current page as bookmark with [Url Forwarder](https://play.google.com/store/apps/details?id=net.daverix.urlforward) (sorry, I don't know about ios)
 
 ## config
-Override config with URL parameters: `_.html?local=<localkey>&remote=<remotekey>&remember=<true/false>
-`
+Override config with URL parameters: `_.html?storageid=<storageid>&remember=<true/false>`
+
 Use for separate bookmark "pages":
 - storageid: key name for storage
 - remember: use local storage? (false=prompt password each time)
