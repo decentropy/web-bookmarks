@@ -17,6 +17,10 @@
  * limitations under the License.
  * ========================================================= */
 
+/* =========================================================
+ * web-bookmarks: edited enableLinks attributes
+ * ========================================================= */
+
 ;(function ($, window, document, undefined) {
 
 	/*global jQuery, console*/
@@ -587,7 +591,8 @@
 				treeItem
 					.append($(_this.template.link)
 						.attr('href', node.href)
-						.attr('target', node.href ? "_blank" : "" )
+						.attr('target', node.href ? "_blank" : "" ) //web-bookmarks
+						.attr('rel', "noreferrer" ) //web-bookmarks
 						.append(node.text)
 					);
 			}
@@ -1248,4 +1253,3 @@
 	};
 
 })(jQuery, window, document);
-
