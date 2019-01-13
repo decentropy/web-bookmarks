@@ -41,7 +41,7 @@ function toggleTextArea() {
     debug('----- close editor -----');
     $('#savelink').css({'color': 'yellow'});
     $('#editorDiv').css({'display': 'none'});
-    G.saveStr( $('#editor').val() );
+    G.save( JSON.parse($('#editor').val()) );
     updateTree();
   }
   else{
@@ -98,7 +98,7 @@ function updateTree() {
 
   //ON NODE MENU -------------------
   $('#tree').on('nodeChecked', function(event, data) { //delete, move
-    var moveto = prompt(data.text + "\n\nDELETE?\n\n('Ok' to delete. Type folder name, to move)");
+    var moveto = prompt(data.text + "\n\nTo DELETE, Press 'ok'.\n\nTo MOVE, type folder name:");
     if (moveto!=null) {cutItem(data.text, moveto); G.postData(updateTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
@@ -151,11 +151,10 @@ $(document).ready(function() {
   debug('----- ready -----');
 
   //G config init
-  //optional url config: _.html?local=<localkey>&remote=<remotekey>&remember=<true/false>
   var qs = new URLSearchParams(window.location.search);
-  G = new Config(qs.get('local'),qs.get('remote'),qs.get('remember')); //local key, remote key, remember pwd?
-  $("#localname").html(G.LOCAL);
-  debug(G.REMOTE + ',' + G.REMEMBER);
+  //optional url config: _.html?storageid=<storageid>&remember=<true/false>
+  G = new Config(qs.get('storageid'), qs.get('remember'));
+  $("#localname").html(G.STORAGEID);
 
   //show menu tree
   updateTree();
