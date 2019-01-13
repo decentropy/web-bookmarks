@@ -16,7 +16,7 @@ function debug(lbl) {
   console.log( lbl + ": " );
 };
 
-function Config(local, remote, remember) {
+function Config(storageid, remember) {
 
   this.tjson;
   this.tdata;
@@ -24,13 +24,12 @@ function Config(local, remote, remember) {
   this.expanded = new Set();
 
   // STORAGE KEYS
-  this.LOCAL = local ? local : "bookmarks"; 
-  this.REMOTE = remote ? remote : "encdata";
+  this.STORAGEID = storageid ? storageid : "bookmarks"; 
   this.REMEMBER = (remember=="false") ? false : true; //remember password?
 
   // LOCAL DATA
-  this.storeLocal = function(str) { if (this.REMEMBER) localStorage.setItem(this.LOCAL, str); return true; };
-  this.backupLocal = function() { if (this.REMEMBER) localStorage.setItem(this.LOCAL+'BAK', this.tjson); return true; };
+  this.storeLocal = function(str) { if (this.REMEMBER) localStorage.setItem(this.STORAGEID, str); return true; };
+  this.backupLocal = function() { if (this.REMEMBER) localStorage.setItem(this.STORAGEID+'BAK', this.tjson); return true; };
 
   // SAVING
   this.save = function(data) {
@@ -43,16 +42,16 @@ function Config(local, remote, remember) {
     this.tdata = JSON.parse(json);
     return this.storeLocal(this.tjson);
   };
-  this.saveExpanded = function(){ localStorage.setItem(G.LOCAL+"-expanded", JSON.stringify(Array.from(this.expanded)));}
+  this.saveExpanded = function(){ localStorage.setItem(G.STORAGEID+"-expanded", JSON.stringify(Array.from(this.expanded)));}
 
   // LOAD LOCAL
-  this.saveStr(localStorage.getItem(this.LOCAL));
-  if (localStorage.getItem(this.LOCAL+"-expanded")){ 
-    this.expanded = new Set(JSON.parse(localStorage.getItem(this.LOCAL+"-expanded")));
+  this.saveStr(localStorage.getItem(this.STORAGEID));
+  if (localStorage.getItem(this.STORAGEID+"-expanded")){ 
+    this.expanded = new Set(JSON.parse(localStorage.getItem(this.STORAGEID+"-expanded")));
   }
 
   // REMOTE DATA (async)
-  this.dbref = firebase.database().ref().child(this.REMOTE);
+  this.dbref = firebase.database().ref().child(this.STORAGEID);
   this.fetchCallback = function(json, func) {
     this.saveStr(json); 
     if (func) func();
@@ -69,10 +68,10 @@ function Config(local, remote, remember) {
   // PASSWORDS, ENCRYPT/DECRYPT
   this.getPassword = function() { 
     if (this.pwd) return this.pwd;
-    this.pwd = localStorage.getItem(this.LOCAL+"-pwd");
+    this.pwd = localStorage.getItem(this.STORAGEID+"-pwd");
     if (!this.pwd){
-      this.pwd = prompt('Encryption Password');
-      if (this.REMEMBER) localStorage.setItem(this.LOCAL+"-pwd", this.pwd);
+      this.pwd = prompt('Your Password:');
+      if (this.REMEMBER) localStorage.setItem(this.STORAGEID+"-pwd", this.pwd);
     }
     return this.pwd;
   };
@@ -84,7 +83,7 @@ function Config(local, remote, remember) {
     catch(err){ 
       console.log("BAD PASSWORD?");
       this.pwd = null; //forget
-      localStorage.removeItem(this.LOCAL+"-pwd");
+      localStorage.removeItem(this.STORAGEID+"-pwd");
       return null;
     };
   };
