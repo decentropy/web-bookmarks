@@ -33,7 +33,7 @@ Optional (Firebase DB permissions) - *auth by phone, if you're worried some java
 - use "manage" link, for convenient GUI JSON editor
 
 ## adding bookmarks
-To bookmark a page, use link or you open "bookmarks.html#*url_to_add.com*"
+To bookmark a page, use link or you open `_.html#<url_to_add.com>`
 
 To add from browser in your PC, use a bookmarklet, e.g.:
 
