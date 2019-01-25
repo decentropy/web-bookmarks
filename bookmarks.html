@@ -2,50 +2,71 @@
 
 <html>
 <head>
+
+  <script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
+  <script>
+  //========================================
+  // INSERT "Initialize Firebase" SNIPPET ('var config" ... "firebase.initializeApp(config);"
+  //========================================
+
+  var config = {
+    apiKey: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    authDomain: "XXXXXXXXXXX.firebaseapp.com",
+    databaseURL: "https://XXXXXXXXXXX.firebaseio.com",
+    projectId: "XXXXXXXXXXX",
+    storageBucket: "XXXXXXXXXXX.appspot.com",
+    messagingSenderId: "XXXXXXXXXXX"
+  };
+  firebase.initializeApp(config);
+
+  //========================================
+  </script>
+
+
+  <title>Bookmarks</title>
   <meta charset=utf-8 />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bookmarks</title>
 
-<meta name="referrer" content="no-referrer">
+  <meta name="referrer" content="no-referrer">
 
-<!-- Stylesheets -->
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" rel="stylesheet">
-<style>
-body {background: black; color: white;}
-</style>
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="bootstrap-treeview.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+  <script src="jsonQ.min.js"></script>
 
-<!-- Scripts -->
-<script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script src="bootstrap-treeview.js?z"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
-<script src="common.js"></script>
-<script type="text/javascript" src="jsonQ.min.js"></script>
+  <!-- Stylesheets -->
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" rel="stylesheet">
+  <style>
+  body {background: black; color: white;}
+  </style>
 
 </head>
 <body>
 
-<!-- 
-............. EDITOR .............
--->
+<!-- ------------------------------------------ HTML body ------------------------------------------ -->
+
+
+<!-- Editor, header -->
 <span id="localname"></span>: 
 <a href="javascript:toggleTextArea()">edit</a> - 
 <div id="editorDiv" style="display:none;">
   <textarea id="editor" style="width:100%; height:600px; color:black;"></textarea>
+  <a href="#" onclick="$('#editor').val(localStorage.getItem(G.STORAGEID+'BAK'))">restore<a/>
 </div>
 <a id="savelink" href="#" onclick="G.postData(); G.backupLocal(); $('#savelink').removeAttr('style');">save</a>
 
 <script>
 function toggleTextArea() {
   if ($('#editorDiv').css("display")=='block'){
-    debug('----- close editor -----');
+    console.log('*close editor');
     $('#savelink').css({'color': 'yellow'});
     $('#editorDiv').css({'display': 'none'});
     G.save( JSON.parse($('#editor').val()) );
     updateTree();
   }
   else{
-    debug('----- open editor -----');
+    console.log('*open editor');
     $('#editorDiv').css({'display': 'block'});
     var prettify = G.tjson.replace(/},/g,"},\n").replace(/],/g,"\n],").replace(/\[/g,"[\n"); //prettify
     $('#editor').val(prettify); //edit
@@ -54,15 +75,13 @@ function toggleTextArea() {
 
 </script>
 
-<!-- 
-............. TREE DISPLAY .............
--->
+<!-- Menu, footer-->
 <div id="tree"></div>
 &nbsp;&nbsp;<a href="#" onclick="addItem(prompt('URL to add:')); G.postData(updateTree);">add+</a> - 
 <a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
 <a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
 
-<script>// https://github.com/jonmiles/bootstrap-treeview
+<script>
 
 
 // GLOBALS
@@ -70,10 +89,128 @@ var rootids; //#tree root ids
 var G; //load on ready
 
 
-//================= UPDATE TREE
-function updateTree() {
-    debug('----- updateTree -----');
+//Common object, methods
+function Config(storageid, remember) {
 
+  this.tjson; //in-memory data
+  this.tdata; //in-memory data
+  this.pwd; //in-memory data
+  this.expanded = new Set(); //in-memory data
+
+  //keys,options
+  this.STORAGEID = storageid ? storageid : "bookmarks"; 
+  this.REMEMBER = (remember=="false") ? false : true; //remember password?
+
+  //local storage
+  this.storeLocal = function(str) { if (this.REMEMBER) localStorage.setItem(this.STORAGEID, str); return true; };
+  this.backupLocal = function() { if (this.REMEMBER) localStorage.setItem(this.STORAGEID+'BAK', this.tjson); return true; };
+
+  //save local
+  this.save = function(data) {
+    this.tdata = data;
+    this.tjson = JSON.stringify(data);
+    return this.storeLocal(this.tjson);
+  };
+  this.saveStr = function(json) {
+    this.tjson = json;
+    this.tdata = JSON.parse(json);
+    return this.storeLocal(this.tjson);
+  };
+  this.saveExpanded = function(){ localStorage.setItem(G.STORAGEID+"-expanded", JSON.stringify(Array.from(this.expanded)));}
+
+  //load local
+  this.saveStr(localStorage.getItem(this.STORAGEID));
+  if (localStorage.getItem(this.STORAGEID+"-expanded")){ 
+    this.expanded = new Set(JSON.parse(localStorage.getItem(this.STORAGEID+"-expanded")));
+  }
+
+  //fetch data, callback
+  this.firebasedb = firebase.database().ref().child(this.STORAGEID);
+  this.fetchCallback = function(json, func) {
+    this.saveStr(json); 
+    if (func) func();
+  };
+  this.fetchData = function(func) { 
+    this.firebasedb.once("value").then( 
+      snapshot => this.fetchCallback(this.decrypt(snapshot.val()), func) //fetch->decrypt
+    ); 
+  };
+
+  //post data, callback
+  this.postData = function(func) { 
+    this.firebasedb.set(this.encrypt(this.tjson), func); //encrypt->post
+  };
+
+  //password, decrypt, encrypt
+  this.getPassword = function() { 
+    if (this.pwd) return this.pwd;
+    this.pwd = localStorage.getItem(this.STORAGEID+"-pwd");
+    if (!this.pwd){
+      this.pwd = prompt('Your Password:');
+      if (this.REMEMBER) localStorage.setItem(this.STORAGEID+"-pwd", this.pwd);
+    }
+    return this.pwd;
+  };
+  this.encrypt = function(str) { return CryptoJS.AES.encrypt(str, this.getPassword()).toString() };
+  this.decrypt = function(str) {
+    try{
+      return CryptoJS.AES.decrypt(str, this.getPassword()).toString(CryptoJS.enc.Utf8);
+    }
+    catch(err){ 
+      console.log("BAD PASSWORD?");
+      this.pwd = null; //forget
+      localStorage.removeItem(this.STORAGEID+"-pwd");
+      return null;
+    };
+  };
+}
+
+//add
+function addItem(url){
+  if (url){
+    var newdata = G.tdata;
+    if (!newdata) newdata = [];
+    newdata.push({'href':url, 'text':url});
+    G.save(newdata);
+    return true;
+  }
+}
+
+//delete, cut, paste
+function cutItem(name, moveto){
+  var cutobj = jsonQ(G.tdata);
+  //cut
+  var cutpath = cutobj.find("text", function (){return this==name}).path();
+  cutpath.pop();
+  var elx = cutobj.pathValue(cutpath); //cut for paste
+  //delete
+  var cutidx = cutpath.pop();
+  var cuttree = cutobj.pathValue(cutpath);
+  cuttree.splice(cutidx,1); 
+  cutobj.setPathValue(cutpath, cuttree);
+  //paste
+  if (moveto){ 
+    var pobj = jsonQ(G.tdata);
+    try {
+      var pastepath = pobj.find("text", function (){return this==moveto}).path();
+      //error, else existing folder...
+      pastepath.pop();
+      var elp = pobj.pathValue(pastepath); //folder
+      elp.nodes.push(elx); //append
+      pobj.setPathValue(pastepath, elp); 
+    }
+    catch(err){ //new folder
+      G.tdata.push({"text": moveto, "nodes": [elx]});
+    }
+  }
+  G.save(G.tdata);
+  return true;
+}
+
+
+//Update menu tree
+function updateTree() {
+  console.log('*updating tree');
   if (!G.tjson) {
     return;
   }
@@ -83,6 +220,7 @@ function updateTree() {
     rootids.push(G.tdata[i].text); 
   });
 
+  //https://github.com/jonmiles/bootstrap-treeview
   $('#tree').treeview({
     data: G.tdata,
     enableLinks: true,
@@ -96,22 +234,25 @@ function updateTree() {
     uncheckedIcon: "glyphicon glyphicon-option-horizontal"
   });
 
-  //ON NODE MENU -------------------
+  //on menu-button
   $('#tree').on('nodeChecked', function(event, data) { //delete, move
     var moveto = prompt(data.text + "\n\nTo DELETE, Press 'ok'.\n\nTo MOVE, type folder name:");
     if (moveto!=null) {cutItem(data.text, moveto); G.postData(updateTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
 
-  //ON NODE SELECT -------------------
+  //on select
   $('#tree').on('nodeSelected', function(event, data) {//select->toggle
     if (!data.href){
       $('#tree').treeview('toggleNodeExpanded', data.nodeId);
     }
+    else{
+      window.open(data.href);
+    }
     $('#tree').treeview('toggleNodeSelected', data.nodeId); //de-select
   });
 
-  //ON NODE EXPAND -------------------
+  //on expand
   $('#tree').on('nodeExpanded', function(event, data) {
     if (rootids.includes(data.text)) { //if is root
       var opened = $('#tree').treeview('getExpanded');
@@ -125,13 +266,13 @@ function updateTree() {
     G.saveExpanded();
   });
 
-  //ON NODE COLLAPSE -------------------
+  //on collapse
   $('#tree').on('nodeCollapsed', function(event, data) {
     G.expanded.delete(data.nodeId);
     G.saveExpanded();
   });
 
-  //RE-EXPAND -------------------
+  //re-expand
   $('#tree').treeview('collapseAll', { silent: true });  
   var expandedArr = Array.from(G.expanded);
   for (var nid in expandedArr){ 
@@ -146,11 +287,11 @@ function updateTree() {
 
 }
 
-//================= LOAD PAGE, MENU 
+//page ready
 $(document).ready(function() {
-  debug('----- ready -----');
+  console.log('*ready');
 
-  //G config init
+  //G Config init
   var qs = new URLSearchParams(window.location.search);
   //optional url config: _.html?storageid=<storageid>&remember=<true/false>
   G = new Config(qs.get('storageid'), qs.get('remember'));
@@ -163,8 +304,13 @@ $(document).ready(function() {
   //add from bookmarklet:  _.html#<new url>
   if (window.location.hash){
     var url = window.location.hash.substr(1);
-    addItem(url);
-    G.postData(function(){window.location.href = window.location.href.split("#")[0]});
+    if (G.tjson){
+      addItem(url);
+      G.postData(function(){window.location.href = window.location.href.split("#")[0]});
+    }
+    else{
+      alert("no data yet. refresh after getting menu...");
+    }
   }
 
 });
