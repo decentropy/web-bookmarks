@@ -20,11 +20,6 @@ Instructions:
 That's all.
 refresh bookmarks.html, add bookmark, you'll be prompted for encryption passphrase
 
-Optional (Firebase DB permissions) - *auth by phone, if you're worried some javascript prankster will find and delete your data*
-1. Enable Firebase sign-in method Phone, and authorize your domain.
-2. Use auth.html, to sign-in by phone
-3. In database, set permissions for your new user.
-
 # details
 
 ## help
