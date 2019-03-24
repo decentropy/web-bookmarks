@@ -11,7 +11,7 @@ This web bookmark solution encrypts data with a local password, allowing you to 
 # get started
 
 This solution **requires creating a (free) firebase app** to store encrypted data 
-**OR** *write your own backend easily... it's a simple get/put on a single encrypted data field*
+**OR** *rewrite it to your own backend easily. It's a simple get/put on a single encrypted data field*
 
 Instructions:
 1. Create new (free) firebase project
