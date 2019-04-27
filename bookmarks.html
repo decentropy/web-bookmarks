@@ -207,6 +207,21 @@ function cutItem(name, moveto){
   return true;
 }
 
+//got remote
+function gotRemoteData(){
+  //add from bookmarklet:  _.html#<new url>
+  if (window.location.hash){
+    var url = window.location.hash.substr(1);
+    if (G.tjson){
+      addItem(url);
+      G.postData(function(){window.location.href = window.location.href.split("#")[0]});
+    }
+    else{
+      alert("no data yet. refresh after getting menu...");
+    }
+  }
+	updateTree();
+}
 
 //Update menu tree
 function updateTree() {
@@ -299,20 +314,7 @@ $(document).ready(function() {
 
   //show menu tree
   updateTree();
-  G.fetchData(updateTree); //remote
-
-  //add from bookmarklet:  _.html#<new url>
-  if (window.location.hash){
-    var url = window.location.hash.substr(1);
-    if (G.tjson){
-      addItem(url);
-      G.postData(function(){window.location.href = window.location.href.split("#")[0]});
-    }
-    else{
-      alert("no data yet. refresh after getting menu...");
-    }
-  }
-
+  G.fetchData(gotRemoteData); //remote
 });
 
 </script>
