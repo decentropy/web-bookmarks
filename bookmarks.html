@@ -191,16 +191,21 @@ function cutItem(name, moveto){
   //paste
   if (moveto){ 
     var pobj = jsonQ(G.tdata);
-    try {
-      var pastepath = pobj.find("text", function (){return this==moveto}).path();
-      //error, else existing folder...
-      pastepath.pop();
-      var elp = pobj.pathValue(pastepath); //folder
-      elp.nodes.push(elx); //append
-      pobj.setPathValue(pastepath, elp); 
+    if (moveto=='-'){
+      G.tdata.push(elx); //to root
     }
-    catch(err){ //new folder
-      G.tdata.push({"text": moveto, "nodes": [elx]});
+    else{
+      try {
+        var pastepath = pobj.find("text", function (){return this==moveto}).path();
+        //error, else existing folder...
+        pastepath.pop();
+        var elp = pobj.pathValue(pastepath); //folder
+        elp.nodes.push(elx); //append
+        pobj.setPathValue(pastepath, elp); 
+      }
+      catch(err){ //new folder
+        G.tdata.push({"text": moveto, "nodes": [elx]});
+      }
     }
   }
   G.save(G.tdata);
@@ -251,7 +256,7 @@ function updateTree() {
 
   //on menu-button
   $('#tree').on('nodeChecked', function(event, data) { //delete, move
-    var moveto = prompt(data.text + "\n\nTo DELETE, Press 'ok'.\n\nTo MOVE, type folder name:");
+    var moveto = prompt(data.text + "\n\nTo DELETE, Press 'ok'.\n\nTo MOVE, type folder name, or '-' for top:");
     if (moveto!=null) {cutItem(data.text, moveto); G.postData(updateTree);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
