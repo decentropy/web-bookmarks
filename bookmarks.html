@@ -1,184 +1,148 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-
-  <script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script>
   //========================================
-  // INSERT "Initialize Firebase" SNIPPET ('var config" ... "firebase.initializeApp(config);"
-  //========================================
-
-  var config = {
-    apiKey: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    authDomain: "XXXXXXXXXXX.firebaseapp.com",
-    databaseURL: "https://XXXXXXXXXXX.firebaseio.com",
-    projectId: "XXXXXXXXXXX",
-    storageBucket: "XXXXXXXXXXX.appspot.com",
-    messagingSenderId: "XXXXXXXXXXX"
-  };
-  firebase.initializeApp(config);
-
+  var gun = Gun('http://YOUR_GUN_SERVER:8765/gun');
   //========================================
   </script>
-
-
   <title>Bookmarks</title>
   <meta charset=utf-8 />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <meta name="referrer" content="no-referrer">
-
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-  <script src="bootstrap-treeview.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+  <script src="bootstrap-treeview.js"></script>
   <script src="jsonQ.min.js"></script>
-
   <!-- Stylesheets -->
   <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" rel="stylesheet">
   <style>
-  body {background: black; color: white;}
+  body {background: #003300; color: white;}
+  button {background-color: grey; color: black}
   </style>
-
 </head>
 <body>
-
 <!-- ------------------------------------------ HTML body ------------------------------------------ -->
 
-
 <!-- Editor, header -->
-<span id="localname"></span>: 
-<a href="javascript:toggleTextArea()">edit</a> - 
-<div id="editorDiv" style="display:none;">
-  <textarea id="editor" style="width:100%; height:600px; color:black;"></textarea>
-  <a href="#" onclick="$('#editor').val(localStorage.getItem(G.STORAGEID+'BAK'))">restore<a/>
+<div style="padding-bottom:8px;">
+  <div style="display:flex; width:100%;">
+    <div style="flex-grow: 1;">
+      <span style="margin-left:5px; font-weight:bold;" id="localname"></span>:
+      <button type="button" onclick="addItem(prompt('URL to add:'));">add+</button>
+    </div>
+    <div style="flex-grow: 10; text-align:center;">
+      <span id="msg" style="width:100%; text-align:center; border:1px; color:#555555;">#url to add</span>
+    </div>
+    <div style="flex-grow: 1; text-align: right;">
+      <a href="javascript:toggleTextArea()">{...}</a>
+        &nbsp;&nbsp;Remember me?<input type="checkbox" id="remember">&nbsp;
+    </div>
+  </div>
+  <div id="editorDiv" style="display:none;">
+    <div style="text-align:center">
+      <a href="#" onclick="localStorage.clear(); window.location.reload();">reload</a> -
+      <button type="button" onclick="bkmkobj=JSON.parse($('#editor').val()); saveObj();">save</button>
+    </div>
+    <textarea id="editor" style="width:100%; height:400px; color:black;"></textarea>
+  </div>
 </div>
-<a id="savelink" href="#" onclick="G.postData(); G.backupLocal(); $('#savelink').removeAttr('style');">save</a>
-
 <script>
 function toggleTextArea() {
   if ($('#editorDiv').css("display")=='block'){
     console.log('*close editor');
-    $('#savelink').css({'color': 'yellow'});
     $('#editorDiv').css({'display': 'none'});
-    G.save( JSON.parse($('#editor').val()) );
-    updateTree();
   }
   else{
     console.log('*open editor');
     $('#editorDiv').css({'display': 'block'});
-    var prettify = G.tjson.replace(/},/g,"},\n").replace(/],/g,"\n],").replace(/\[/g,"[\n"); //prettify
+    var prettify = JSON.stringify(bkmkobj).replace(/},/g,"},\n").replace(/],/g,"\n],").replace(/\[/g,"[\n"); //prettify
     $('#editor').val(prettify); //edit
   }
 }
-
 </script>
 
-<!-- Menu, footer-->
+<!-- Bootstrap TreeView Built Here -->
 <div id="tree"></div>
-&nbsp;&nbsp;<a href="#" onclick="addItem(prompt('URL to add:')); G.postData(updateTree);">add+</a> - 
-<a href="http://jsoneditoronline.org/?json=[]" target="_blank">manage</a> - 
-<a href="#" onclick="localStorage.clear(); location.reload()">sign-out</a>
+<!-- Bootstrap TreeView Built Here -->
+
 
 <script>
 
-
 // GLOBALS
 var rootids; //#tree root ids
-var G; //load on ready
+var BKMKID;
+var bkmkobj; //in-memory data
+var pwd; //in-memory data
+var expandedset = new Set(); //in-memory data
 
+$("#remember").change(function() {
+    if(this.checked) {
+      console.log("remember me");
+      localStorage.setItem("pwd-"+BKMKID, pwd);
+    }
+    else{
+      console.log("forget me");
+      localStorage.removeItem("pwd-"+BKMKID);
+    }
+});
 
-//Common object, methods
-function Config(storageid, remember) {
+//==========================================
+// Common data object & methods
+//==========================================
 
-  this.tjson; //in-memory data
-  this.tdata; //in-memory data
-  this.pwd; //in-memory data
-  this.expanded = new Set(); //in-memory data
+//GUN: Encrypt & Put Data
+function saveObj() {
+  console.log("saveObj() - gun.put: " + BKMKID);
+  var encdata = this.encrypt(JSON.stringify(bkmkobj));
+  gun.get('bkmk-'+BKMKID).get('data').put( encdata, drawMenuTree );
+  return true;
+};
 
-  //keys,options
-  this.STORAGEID = storageid ? storageid : "bookmarks"; 
-  this.REMEMBER = (remember=="false") ? false : true; //remember password?
-
-  //local storage
-  this.storeLocal = function(str) { if (this.REMEMBER) localStorage.setItem(this.STORAGEID, str); return true; };
-  this.backupLocal = function() { if (this.REMEMBER) localStorage.setItem(this.STORAGEID+'BAK', this.tjson); return true; };
-
-  //save local
-  this.save = function(data) {
-    this.tdata = data;
-    this.tjson = JSON.stringify(data);
-    return this.storeLocal(this.tjson);
-  };
-  this.saveStr = function(json) {
-    this.tjson = json;
-    this.tdata = JSON.parse(json);
-    return this.storeLocal(this.tjson);
-  };
-  this.saveExpanded = function(){ localStorage.setItem(G.STORAGEID+"-expanded", JSON.stringify(Array.from(this.expanded)));}
-
-  //load local
-  this.saveStr(localStorage.getItem(this.STORAGEID));
-  if (localStorage.getItem(this.STORAGEID+"-expanded")){ 
-    this.expanded = new Set(JSON.parse(localStorage.getItem(this.STORAGEID+"-expanded")));
+//================ password, decrypt, encrypt ====================
+function getPassword() {
+  if (pwd) return pwd;
+  pwd = localStorage.getItem("pwd-"+BKMKID);
+  if (!pwd){
+    pwd = prompt('Your Password:');
+    if (document.getElementById('remember').checked) localStorage.setItem("pwd-"+BKMKID, pwd);
   }
-
-  //fetch data, callback
-  this.firebasedb = firebase.database().ref().child(this.STORAGEID);
-  this.fetchCallback = function(json, func) {
-    this.saveStr(json); 
-    if (func) func();
-  };
-  this.fetchData = function(func) { 
-    this.firebasedb.once("value").then( 
-      snapshot => this.fetchCallback(this.decrypt(snapshot.val()), func) //fetch->decrypt
-    ); 
-  };
-
-  //post data, callback
-  this.postData = function(func) { 
-    this.firebasedb.set(this.encrypt(this.tjson), func); //encrypt->post
-  };
-
-  //password, decrypt, encrypt
-  this.getPassword = function() { 
-    if (this.pwd) return this.pwd;
-    this.pwd = localStorage.getItem(this.STORAGEID+"-pwd");
-    if (!this.pwd){
-      this.pwd = prompt('Your Password:');
-      if (this.REMEMBER) localStorage.setItem(this.STORAGEID+"-pwd", this.pwd);
-    }
-    return this.pwd;
-  };
-  this.encrypt = function(str) { return CryptoJS.AES.encrypt(str, this.getPassword()).toString() };
-  this.decrypt = function(str) {
-    try{
-      return CryptoJS.AES.decrypt(str, this.getPassword()).toString(CryptoJS.enc.Utf8);
-    }
-    catch(err){ 
-      console.log("BAD PASSWORD?");
-      this.pwd = null; //forget
-      localStorage.removeItem(this.STORAGEID+"-pwd");
-      return null;
-    };
-  };
+  return pwd;
 }
 
+function encrypt(str) {
+  return CryptoJS.AES.encrypt(str, this.getPassword()).toString();
+}
+
+function decrypt(str) {
+  try{
+    return CryptoJS.AES.decrypt(str, this.getPassword()).toString(CryptoJS.enc.Utf8);
+  }
+  catch(err){
+    console.log("BAD PASSWORD?");
+    pwd = null; //forget
+    localStorage.removeItem("pwd-"+BKMKID);
+    return null;
+  }
+}
+
+
+//================ add, cut, paste ====================
 //add
 function addItem(url){
   if (url){
-    var newdata = G.tdata;
-    if (!newdata) newdata = [];
-    newdata.push({'href':url, 'text':url});
-    G.save(newdata);
+    if (!bkmkobj) bkmkobj = [];
+    bkmkobj.push({'href':url, 'text':url});
+    saveObj();
     return true;
   }
 }
 
 //delete, cut, paste
 function cutItem(name, moveto){
-  var cutobj = jsonQ(G.tdata);
+  var cutobj = jsonQ(bkmkobj);
   var cutpath = cutobj.find("text", function (){return this==name}).path();
   //rename
   if (moveto.charAt(0)=='#'){
@@ -192,14 +156,14 @@ function cutItem(name, moveto){
     //delete
     var cutidx = cutpath.pop();
     var cuttree = cutobj.pathValue(cutpath);
-    cuttree.splice(cutidx,1); 
+    cuttree.splice(cutidx,1);
     cutobj.setPathValue(cutpath, cuttree);
     //paste
-    if (moveto){ 
-      var pobj = jsonQ(G.tdata);
+    if (moveto){
+      var pobj = jsonQ(bkmkobj);
       //to root
       if (moveto=='-'){
-        G.tdata.push(elx); 
+        bkmkobj.push(elx);
       }
       //to folder
       else{
@@ -209,65 +173,60 @@ function cutItem(name, moveto){
           pastepath.pop();
           var elp = pobj.pathValue(pastepath); //folder
           elp.nodes.push(elx); //append
-          pobj.setPathValue(pastepath, elp); 
+          pobj.setPathValue(pastepath, elp);
         }
         catch(err){ //new folder
-          G.tdata.push({"text": moveto, "nodes": [elx]});
+          bkmkobj.push({"text": moveto, "nodes": [elx]});
         }
       }
     }
   }
-  G.save(G.tdata);
+  saveObj();
   return true;
 }
 
 
-//got remote
-function gotRemoteData(){
-  //add from bookmarklet:  _.html#<new url>
-  if (window.location.hash){
-    var url = window.location.hash.substr(1);
-    if (G.tjson){
-      addItem(url);
-      G.postData(function(){window.location.href = window.location.href.split("#")[0]});
-    }
-    else{
-      alert("no data yet. refresh after getting menu...");
-    }
-  }
-	updateTree();
-}
-
-//Update menu tree
-function updateTree() {
-  console.log('*updating tree');
-  if (!G.tjson) {
+//==========================================
+//==========================================
+// Update Bootstrap-Treeview
+//https://github.com/jonmiles/bootstrap-treeview
+//==========================================
+//==========================================
+function drawMenuTree() {
+  console.log('drawMenuTree()...');
+  if (!bkmkobj) {
     return;
   }
 
   rootids = []; //root folders
-  jQuery(G.tdata).each(function (i){ 
-    rootids.push(G.tdata[i].text); 
+  jQuery(bkmkobj).each(function (i){
+    rootids.push(bkmkobj[i].text);
   });
 
-  //https://github.com/jonmiles/bootstrap-treeview
-  $('#tree').treeview({
-    data: G.tdata,
-    enableLinks: true,
-    backColor: '#000000',
-    onhoverColor: '#333366',
-    borderColor: '#333333',
-    expandIcon: 'glyphicon glyphicon-chevron-right',
-    collapseIcon: 'glyphicon glyphicon-chevron-down',
-    showCheckbox: true,
-    checkedIcon: "glyphicon glyphicon-option-horizontal",
-    uncheckedIcon: "glyphicon glyphicon-option-horizontal"
-  });
+  //BUG: loading issue?
+  if ($('#tree').treeview){
+    $('#tree').treeview({
+      data: bkmkobj,
+      enableLinks: true,
+      backColor: '#000000',
+      onhoverColor: '#333366',
+      borderColor: '#333333',
+      expandIcon: 'glyphicon glyphicon-chevron-right',
+      collapseIcon: 'glyphicon glyphicon-chevron-down',
+      showCheckbox: true,
+      checkedIcon: "glyphicon glyphicon-option-horizontal",
+      uncheckedIcon: "glyphicon glyphicon-option-horizontal"
+    });
+  }
+  else{
+    setTimeout(drawTreeMenu, 1000);
+    return true;
+  }
 
   //on menu-button
   $('#tree').on('nodeChecked', function(event, data) { //delete, move
     var moveto = prompt(data.text + "\n\nTo DELETE, Press 'ok'.\n\nTo MOVE, type <folder name>\n\nTo RENAME, type #<newname>\n\nTo move TOP, enter '-'");
-    if (moveto!=null) {cutItem(data.text, moveto); G.postData(updateTree);};
+    if (moveto!=null) {cutItem(data.text, moveto);};
     $('#tree').treeview('uncheckAll', { silent: true });
   });
 
@@ -292,48 +251,75 @@ function updateTree() {
         }
       });
     }
-    G.expanded.add(data.nodeId);
-    G.saveExpanded();
+    expandedset.add(data.nodeId);
+    saveExpanded();
   });
 
   //on collapse
   $('#tree').on('nodeCollapsed', function(event, data) {
-    G.expanded.delete(data.nodeId);
-    G.saveExpanded();
+    expandedset.delete(data.nodeId);
+    saveExpanded();
   });
 
   //re-expand
-  $('#tree').treeview('collapseAll', { silent: true });  
-  var expandedArr = Array.from(G.expanded);
-  for (var nid in expandedArr){ 
+  $('#tree').treeview('collapseAll', { silent: true });
+  var expandedArr = Array.from(expandedset);
+  for (var nid in expandedArr){
     try{
       $('#tree').treeview('expandNode', expandedArr[nid]);
     }
     catch{ //forget not found
-      G.expanded.delete(expandedArr[nid]);
-      G.saveExpanded();
+      expandedset.delete(expandedArr[nid]);
+      saveExpanded();
     }
   }
-
 }
 
+function saveExpanded(){
+  localStorage.setItem(BKMKID+"-expanded", JSON.stringify(Array.from(expandedset)));
+}
+//============== end treeview =====================
+
+
+
+//==========================================
+//==========================================
 //page ready
+//==========================================
+//==========================================
 $(document).ready(function() {
-  console.log('*ready');
+  console.log('document.ready...');
 
-  //G Config init
+  //bookmarks?id=
   var qs = new URLSearchParams(window.location.search);
-  //optional url config: _.html?storageid=<storageid>&remember=<true/false>
-  G = new Config(qs.get('storageid'), qs.get('remember'));
-  $("#localname").html(G.STORAGEID);
+  BKMKID = qs.get('id');
+  if (!BKMKID) {
+      //prompt for id
+      BKMKID=prompt("To continue, enter bookmarks name:");
+      if (BKMKID) location.href = location.href + '?id=' + BKMKID;
+  }
+  else {
+    //have an id
+    $("#localname").html(BKMKID);
+    if (localStorage.getItem("pwd-"+BKMKID)) document.getElementById('remember').checked=true;
 
-  //show menu tree
-  updateTree();
-  G.fetchData(gotRemoteData); //remote
+    // GUN: Decrypt & Get Data
+    gun.get('bkmk-'+BKMKID).get('data').on(function(data, key){
+      console.log("gun.get.on: " + key);
+      var decdata = decrypt(data);
+      bkmkobj = JSON.parse(decdata);
+      drawMenuTree();
+      //add from bookmarklet: bookmarks?id=<id>#<new url>
+      if (window.location.hash){
+        var newurl = window.location.hash.substr(1);
+        $("#msg").html("<a href='#' onclick='addItem(\"" + newurl + "\")'>Add " + newurl + "</a>");
+      }
+    });
+
+  }
 });
 
 </script>
-
 
 </body>
 </html>
