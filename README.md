@@ -2,21 +2,17 @@
 Web bookmarks manager with client-side encryption
 
 # about
-Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party.
-
-This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
+Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to single browser platform across devices, and 2) exposes all your personal bookmarks to a third party. This web bookmark solution encrypts data with a local password, allowing you to share bookmarks across all devices and browsers without exposing your data.
 
 ![screenshot](https://raw.githubusercontent.com/steve-vincent/web-bookmarks/master/screenshot.png)
 
 # get started
 
-You can test-drive without any special setup. Your bookmark can be accessed `bookmarks.html?id=<my id>
+You can test-drive without any special setup. Your bookmarks will be saved at `bookmarks.html?id=<my id>
 
-However, for your bookmarks to sync between devices, you'll need to a gundb server: https://github.com/amark/gun
+### For your bookmarks to sync between devices, you'll need to a gundb server: https://github.com/amark/gun
 
-# details
-
-## help
+# help
 - click "..." to delete or move or rename items
 - click "remember me" remember password
 - click "{...}" to edit JSON manually.
@@ -27,7 +23,7 @@ Use "Add" button, or `bookmarks.html#<url>` to add a bookmark.
 TIP: use a bookmarklet to conveniently add from any browser, e.g.:
 ```javascript:window.location="<my host>/bookmarks.html#"+window.location;```
 
-[Url Forwarder(android)] (https://play.google.com/store/apps/details?id=net.daverix.urlforward) supports bookmarklets 
+[Url Forwarder(android)](https://play.google.com/store/apps/details?id=net.daverix.urlforward) supports bookmarklets 
 
 ## folders and format
 Example JSON: Use "nodes" for folders. 
