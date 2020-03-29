@@ -8,7 +8,7 @@ Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to s
 
 # get started
 
-You can test-drive without any special setup. Your bookmarks will be saved at `bookmarks.html?id=<my id>
+You can test-drive without any special setup. Your bookmarks will be saved at `bookmarks.html?id=[my id]
 
 ### For your bookmarks to sync between devices, you'll need to a gundb server: https://github.com/amark/gun
 
@@ -21,9 +21,7 @@ You can test-drive without any special setup. Your bookmarks will be saved at `b
 Use "Add" button, or `bookmarks.html#<url>` to add a bookmark.
 
 TIP: use a bookmarklet to conveniently add from any browser, e.g.:
-```javascript:window.location="<my host>/bookmarks.html#"+window.location;```
-
-[Url Forwarder(android)](https://play.google.com/store/apps/details?id=net.daverix.urlforward) supports bookmarklets 
+```javascript:window.location="<my host>/bookmarks.html#"+window.location;``` [Url Forwarder(android)](https://play.google.com/store/apps/details?id=net.daverix.urlforward) supports bookmarklets 
 
 ## folders and format
 Example JSON: Use "nodes" for folders. 
