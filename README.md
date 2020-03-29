@@ -10,39 +10,24 @@ This web bookmark solution encrypts data with a local password, allowing you to 
 
 # get started
 
-This solution **requires creating a (free) firebase app** to store encrypted data 
-**OR** *rewrite it to your own backend easily. It's a simple get/put on a single encrypted data field*
+You can test-drive without any special setup. Your bookmark can be accessed `bookmarks.html?id=<my id>
 
-Instructions:
-1. Create new (free) firebase project
-2. Click "Web Setup" and copy "Initialize Firebase" script into common.js
-3. Create Realtime Database (in test mode)
-
-That's all.
-refresh bookmarks.html, add bookmark, you'll be prompted for encryption passphrase
+However, for your bookmarks to sync between devices, you'll need to a gundb server: https://github.com/amark/gun
 
 # details
 
 ## help
-- click "..." to delete or move an item
-- click "edit" to manually edit JSON. You must click "save" to commit remote storage.
-- use "manage" link, for convenient GUI JSON editor
+- click "..." to delete or move or rename items
+- click "remember me" remember password
+- click "{...}" to edit JSON manually.
 
 ## adding bookmarks
-To bookmark a page, use link or you open `bookmarks.html#<url_to_add.com>`
+Use "Add" button, or `bookmarks.html#<url>` to add a bookmark.
 
-To add from browser in your PC, use a bookmarklet, e.g.:
-
+TIP: use a bookmarklet to conveniently add from any browser, e.g.:
 ```javascript:window.location="<my host>/bookmarks.html#"+window.location;```
 
-On an android phone, share current page as bookmark with [Url Forwarder](https://play.google.com/store/apps/details?id=net.daverix.urlforward) (sorry, I don't know about ios)
-
-## config
-Override config with URL parameters: `bookmarks.html?storageid=<storageid>&remember=<true/false>`
-
-Use for separate bookmark "pages":
-- storageid: key name for storage
-- remember: use local storage? (false=prompt password each time)
+[Url Forwarder(android)] (https://play.google.com/store/apps/details?id=net.daverix.urlforward) supports bookmarklets 
 
 ## folders and format
 Example JSON: Use "nodes" for folders. 
