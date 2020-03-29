@@ -8,7 +8,7 @@ Common browser bookmark tools (in Chrome or Firefox) force you to 1) commit to s
 
 # get started
 
-You can test-drive without any special setup. Your bookmarks will be saved at `bookmarks.html?id=[my id]
+You can test-drive HTML without any backend setup. Your bookmarks will be saved at `bookmarks.html?id=[my id]
 
 ### For your bookmarks to sync between devices, you'll need to a gundb server: https://github.com/amark/gun
 
