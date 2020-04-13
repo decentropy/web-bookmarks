@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+<!--
+Personal Web Bookmarks, w/ client-side encryption
+https://github.com/steve-vincent/web-bookmarks
+-->
+
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script>
   //========================================
-  var gun = Gun('http://YOUR_GUN_SERVER:8765/gun');
+  var GUNSERVER = Gun('http://YOUR_GUN_SERVER:8765/gun');
   //========================================
+  var gun = Gun(GUNSERVER);
+  console.log("Gun(" + GUNSERVER + ")");
   </script>
   <title>Bookmarks</title>
   <meta charset=utf-8 />
@@ -49,7 +57,35 @@
     <textarea id="editor" style="width:100%; height:400px; color:black;"></textarea>
   </div>
 </div>
+
+<!-- Bootstrap TreeView Built Here -->
+<div id="tree"></div>
+<!-- Bootstrap TreeView Built Here -->
+<div id="server" style="float:right;padding-right:10px;font-size:80%;"></div>
+
 <script>
+
+// GLOBALS
+var rootids; //#tree root ids
+var BKMKID;
+var bkmkobj; //in-memory data
+var pwd; //in-memory data
+var expandedset = new Set(); //in-memory data
+
+//Init UI
+$("#localname").html(BKMKID);
+$("#server").html("<a target='_new' href='" + GUNSERVER + "'>" + GUNSERVER + "</a>");
+if (localStorage.getItem("pwd-"+BKMKID)) document.getElementById('remember').checked=true;
+$("#remember").change(function() {
+    if(this.checked) {
+      console.log("remember me");
+      localStorage.setItem("pwd-"+BKMKID, pwd);
+    }
+    else{
+      console.log("forget me");
+      localStorage.removeItem("pwd-"+BKMKID);
+    }
+});
 function toggleTextArea() {
   if ($('#editorDiv').css("display")=='block'){
     console.log('*close editor');
@@ -62,32 +98,6 @@ function toggleTextArea() {
     $('#editor').val(prettify); //edit
   }
 }
-</script>
-
-<!-- Bootstrap TreeView Built Here -->
-<div id="tree"></div>
-<!-- Bootstrap TreeView Built Here -->
-
-
-<script>
-
-// GLOBALS
-var rootids; //#tree root ids
-var BKMKID;
-var bkmkobj; //in-memory data
-var pwd; //in-memory data
-var expandedset = new Set(); //in-memory data
-
-$("#remember").change(function() {
-    if(this.checked) {
-      console.log("remember me");
-      localStorage.setItem("pwd-"+BKMKID, pwd);
-    }
-    else{
-      console.log("forget me");
-      localStorage.removeItem("pwd-"+BKMKID);
-    }
-});
 
 //==========================================
 // Common data object & methods
@@ -136,6 +146,7 @@ function addItem(url){
     if (!bkmkobj) bkmkobj = [];
     bkmkobj.push({'href':url, 'text':url});
     saveObj();
+    $("#msg").html('added.');
     return true;
   }
 }
@@ -287,7 +298,7 @@ function saveExpanded(){
 //page ready
 //==========================================
 //==========================================
-$(document).ready(function() {
+window.onload = function() {
   console.log('document.ready...');
 
   //bookmarks?id=
@@ -299,13 +310,10 @@ $(document).ready(function() {
       if (BKMKID) location.href = location.href + '?id=' + BKMKID;
   }
   else {
-    //have an id
-    $("#localname").html(BKMKID);
-    if (localStorage.getItem("pwd-"+BKMKID)) document.getElementById('remember').checked=true;
-
     // GUN: Decrypt & Get Data
+    console.log('wait for gun.get.on: bkmk-'+BKMKID + ".data");
     gun.get('bkmk-'+BKMKID).get('data').on(function(data, key){
-      console.log("gun.get.on: " + key);
+      console.log("got: " + key);
       var decdata = decrypt(data);
       bkmkobj = JSON.parse(decdata);
       drawMenuTree();
@@ -317,7 +325,7 @@ $(document).ready(function() {
     });
 
   }
-});
+};
 
 </script>
 
